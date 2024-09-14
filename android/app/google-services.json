@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "542263575364",
+    "project_id": "notemap-db",
+    "storage_bucket": "notemap-db.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:542263575364:android:fa5893bde7ca7663418d11",
+        "android_client_info": {
+          "package_name": "com.notemap.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAJwiQwKxNUzxAGhMaY9AEgTkkxOj7lYMg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
