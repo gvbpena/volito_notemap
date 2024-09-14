@@ -27,7 +27,7 @@ class _NoteEditState extends State<NoteEdit> {
   List<String> _imageUrls = [];
   final ImagePicker _picker = ImagePicker();
   final FirebaseStorage _storage = FirebaseStorage.instance;
-  bool _isLoading = false; // Loading state
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -39,9 +39,7 @@ class _NoteEditState extends State<NoteEdit> {
   }
 
   Future<void> _updateNote() async {
-    setState(() {
-      _isLoading = true; // Start loading
-    });
+    setState(() => _isLoading = true);
     try {
       await widget.noteRepository.updateNote(
         widget.note.id!,
@@ -53,52 +51,52 @@ class _NoteEditState extends State<NoteEdit> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Note updated successfully')),
       );
-      Navigator.pop(context, true); // Return true to indicate success
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        '/home',
+        (route) => false,
+      );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error updating note: $e')),
       );
     } finally {
-      setState(() {
-        _isLoading = false; // Stop loading
-      });
+      setState(() => _isLoading = false);
     }
   }
 
   void _onMapTap(LatLng location) {
-    setState(() {
-      _selectedLocation = location;
-    });
+    setState(() => _selectedLocation = location);
   }
 
   void _onMarkerDragEnd(LatLng newPosition) {
-    setState(() {
-      _selectedLocation = newPosition;
-    });
+    setState(() => _selectedLocation = newPosition);
   }
 
   Future<void> _pickImages() async {
-    final pickedFiles = await _picker.pickMultiImage();
-    List<String> newImageUrls = [];
-    for (var pickedFile in pickedFiles) {
-      final file = File(pickedFile.path);
-      try {
-        final storageRef = _storage
-            .ref()
-            .child('images/${DateTime.now().millisecondsSinceEpoch}');
-        final uploadTask = storageRef.putFile(file);
-        final snapshot = await uploadTask.whenComplete(() {});
-        final imageUrl = await snapshot.ref.getDownloadURL();
-        newImageUrls.add(imageUrl);
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error uploading image: $e')),
-        );
-      }
-    }
-    setState(() {
-      _imageUrls.addAll(newImageUrls);
-    });
+    final pickedFiles = await _picker.pickMultiImage(); // No images selected
+
+    final newImageUrls = await Future.wait(
+      pickedFiles.map((pickedFile) async {
+        final file = File(pickedFile.path);
+        try {
+          final storageRef = _storage
+              .ref()
+              .child('images/${DateTime.now().millisecondsSinceEpoch}');
+          final uploadTask = storageRef.putFile(file);
+          final snapshot = await uploadTask.whenComplete(() {});
+          return await snapshot.ref.getDownloadURL();
+        } catch (e) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error uploading image: $e')),
+          );
+          return '';
+        }
+      }),
+    );
+
+    setState(
+        () => _imageUrls.addAll(newImageUrls.where((url) => url.isNotEmpty)));
   }
 
   @override
@@ -109,14 +107,13 @@ class _NoteEditState extends State<NoteEdit> {
         actions: [
           if (_isLoading)
             const Center(child: CircularProgressIndicator())
-          else ...[
+          else
             IconButton(
               icon: const Icon(Icons.save),
               onPressed: _updateNote,
             ),
-          ],
         ],
-        backgroundColor: Colors.blue, // Blue theme color
+        backgroundColor: Colors.blue,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -124,67 +121,80 @@ class _NoteEditState extends State<NoteEdit> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              TextField(
-                controller: _titleController,
-                decoration: const InputDecoration(labelText: 'Title'),
-              ),
+              _buildTextField(_titleController, 'Title'),
               const SizedBox(height: 16),
-              TextField(
-                controller: _contentController,
-                decoration: const InputDecoration(labelText: 'Content'),
-                maxLines: null,
-              ),
+              _buildTextField(_contentController, 'Content', maxLines: null),
               const SizedBox(height: 16),
-              SizedBox(
-                height: 400, // Increased height for the map
-                child: GoogleMap(
-                  initialCameraPosition: const CameraPosition(
-                    target: LatLng(14.5995, 120.9842), // Default location
-                    zoom: 12,
-                  ),
-                  onTap: _onMapTap,
-                  markers: _selectedLocation != null
-                      ? {
-                          Marker(
-                            markerId: const MarkerId('selected-location'),
-                            position: _selectedLocation!,
-                            draggable: true,
-                            onDragEnd: _onMarkerDragEnd,
-                          ),
-                        }
-                      : {},
-                ),
-              ),
+              _buildMap(),
               const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: _pickImages,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue, // Blue theme color
-                ),
-                child: const Text('Add Images'),
-              ),
+              _buildAddImagesButton(),
               const SizedBox(height: 16),
-              if (_imageUrls.isNotEmpty)
-                SizedBox(
-                  height: 120,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: _imageUrls.length,
-                    itemBuilder: (context, index) {
-                      final imageUrl = _imageUrls[index];
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 8.0),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: Image.network(imageUrl),
-                        ),
-                      );
-                    },
-                  ),
-                ),
+              if (_imageUrls.isNotEmpty) _buildImageList(),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildTextField(TextEditingController controller, String label,
+      {int? maxLines}) {
+    return TextField(
+      controller: controller,
+      decoration: InputDecoration(labelText: label),
+      maxLines: maxLines,
+    );
+  }
+
+  Widget _buildMap() {
+    return SizedBox(
+      height: 400,
+      child: GoogleMap(
+        initialCameraPosition: const CameraPosition(
+          target: LatLng(14.5995, 120.9842),
+          zoom: 12,
+        ),
+        onTap: _onMapTap,
+        markers: _selectedLocation != null
+            ? {
+                Marker(
+                  markerId: const MarkerId('selected-location'),
+                  position: _selectedLocation!,
+                  draggable: true,
+                  onDragEnd: _onMarkerDragEnd,
+                ),
+              }
+            : {},
+      ),
+    );
+  }
+
+  Widget _buildAddImagesButton() {
+    return ElevatedButton(
+      onPressed: _pickImages,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.blue,
+      ),
+      child: const Text('Add Images'),
+    );
+  }
+
+  Widget _buildImageList() {
+    return SizedBox(
+      height: 120,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: _imageUrls.length,
+        itemBuilder: (context, index) {
+          final imageUrl = _imageUrls[index];
+          return Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.network(imageUrl),
+            ),
+          );
+        },
       ),
     );
   }
