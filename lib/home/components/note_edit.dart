@@ -11,10 +11,10 @@ class NoteEdit extends StatefulWidget {
   final NoteRepository noteRepository;
 
   const NoteEdit({
-    Key? key,
+    super.key,
     required this.note,
     required this.noteRepository,
-  }) : super(key: key);
+  });
 
   @override
   _NoteEditState createState() => _NoteEditState();
@@ -27,6 +27,7 @@ class _NoteEditState extends State<NoteEdit> {
   List<String> _imageUrls = [];
   final ImagePicker _picker = ImagePicker();
   final FirebaseStorage _storage = FirebaseStorage.instance;
+  bool _isLoading = false; // Loading state
 
   @override
   void initState() {
@@ -37,19 +38,30 @@ class _NoteEditState extends State<NoteEdit> {
     _imageUrls = widget.note.imageUrls ?? [];
   }
 
-  void _updateNote() async {
+  Future<void> _updateNote() async {
+    setState(() {
+      _isLoading = true; // Start loading
+    });
     try {
       await widget.noteRepository.updateNote(
         widget.note.id!,
         title: _titleController.text,
         content: _contentController.text,
         location: _selectedLocation,
+        imageUrls: _imageUrls,
       );
-      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Note updated successfully')),
+      );
+      Navigator.pop(context, true); // Return true to indicate success
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error updating note: $e')),
       );
+    } finally {
+      setState(() {
+        _isLoading = false; // Stop loading
+      });
     }
   }
 
@@ -65,10 +77,10 @@ class _NoteEditState extends State<NoteEdit> {
     });
   }
 
-  Future<void> _pickImage() async {
-    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      // Upload image to Firebase Storage
+  Future<void> _pickImages() async {
+    final pickedFiles = await _picker.pickMultiImage();
+    List<String> newImageUrls = [];
+    for (var pickedFile in pickedFiles) {
       final file = File(pickedFile.path);
       try {
         final storageRef = _storage
@@ -77,15 +89,16 @@ class _NoteEditState extends State<NoteEdit> {
         final uploadTask = storageRef.putFile(file);
         final snapshot = await uploadTask.whenComplete(() {});
         final imageUrl = await snapshot.ref.getDownloadURL();
-        setState(() {
-          _imageUrls.add(imageUrl);
-        });
+        newImageUrls.add(imageUrl);
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error uploading image: $e')),
         );
       }
     }
+    setState(() {
+      _imageUrls.addAll(newImageUrls);
+    });
   }
 
   @override
@@ -94,11 +107,16 @@ class _NoteEditState extends State<NoteEdit> {
       appBar: AppBar(
         title: const Text('Edit Note'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.save),
-            onPressed: _updateNote,
-          ),
+          if (_isLoading)
+            const Center(child: CircularProgressIndicator())
+          else ...[
+            IconButton(
+              icon: const Icon(Icons.save),
+              onPressed: _updateNote,
+            ),
+          ],
         ],
+        backgroundColor: Colors.blue, // Blue theme color
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -118,7 +136,7 @@ class _NoteEditState extends State<NoteEdit> {
               ),
               const SizedBox(height: 16),
               SizedBox(
-                height: 300,
+                height: 400, // Increased height for the map
                 child: GoogleMap(
                   initialCameraPosition: const CameraPosition(
                     target: LatLng(14.5995, 120.9842), // Default location
@@ -139,13 +157,16 @@ class _NoteEditState extends State<NoteEdit> {
               ),
               const SizedBox(height: 16),
               ElevatedButton(
-                onPressed: _pickImage,
-                child: const Text('Add Image'),
+                onPressed: _pickImages,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue, // Blue theme color
+                ),
+                child: const Text('Add Images'),
               ),
               const SizedBox(height: 16),
               if (_imageUrls.isNotEmpty)
                 SizedBox(
-                  height: 100,
+                  height: 120,
                   child: ListView.builder(
                     scrollDirection: Axis.horizontal,
                     itemCount: _imageUrls.length,
@@ -153,7 +174,10 @@ class _NoteEditState extends State<NoteEdit> {
                       final imageUrl = _imageUrls[index];
                       return Padding(
                         padding: const EdgeInsets.only(right: 8.0),
-                        child: Image.network(imageUrl),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.network(imageUrl),
+                        ),
                       );
                     },
                   ),

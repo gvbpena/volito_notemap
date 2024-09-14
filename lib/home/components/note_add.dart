@@ -90,17 +90,53 @@ class _NoteAddState extends State<NoteAdd> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Title input
-            TextField(
-              controller: _titleController,
-              decoration: const InputDecoration(labelText: 'Title'),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black26,
+                    blurRadius: 8,
+                    offset: Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: TextField(
+                controller: _titleController,
+                decoration: const InputDecoration(
+                  labelText: 'Title',
+                  contentPadding: EdgeInsets.symmetric(horizontal: 16.0),
+                  border: InputBorder.none,
+                ),
+                style: const TextStyle(fontSize: 16, color: Colors.black87),
+              ),
             ),
             const SizedBox(height: 16),
 
             // Content input
-            TextField(
-              controller: _contentController,
-              maxLines: 5,
-              decoration: const InputDecoration(labelText: 'Content'),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black26,
+                    blurRadius: 8,
+                    offset: Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: TextField(
+                controller: _contentController,
+                maxLines: 5,
+                decoration: const InputDecoration(
+                  labelText: 'Content',
+                  contentPadding: EdgeInsets.symmetric(horizontal: 16.0),
+                  border: InputBorder.none,
+                ),
+                style: const TextStyle(fontSize: 16, color: Colors.black87),
+              ),
             ),
             const SizedBox(height: 16),
 
@@ -128,8 +164,19 @@ class _NoteAddState extends State<NoteAdd> {
             // Pick images button
             ElevatedButton.icon(
               onPressed: _pickImages,
-              icon: const Icon(Icons.image),
-              label: const Text('Pick Images'),
+              icon: const Icon(Icons.image, color: Colors.white),
+              label: const Text(
+                'Pick Images',
+                style: TextStyle(color: Colors.white),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue, // Blue background color
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8), // Rounded corners
+                ),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+              ),
             ),
             const SizedBox(height: 16),
 
@@ -143,7 +190,10 @@ class _NoteAddState extends State<NoteAdd> {
                   itemBuilder: (context, index) {
                     return Padding(
                       padding: const EdgeInsets.only(right: 8.0),
-                      child: Image.file(_selectedImages[index]),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.file(_selectedImages[index]),
+                      ),
                     );
                   },
                 ),

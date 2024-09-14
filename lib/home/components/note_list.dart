@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart'; // Import this for date formatting
 import '../../models/note_model.dart';
 
 class NoteList extends StatelessWidget {
@@ -14,20 +15,41 @@ class NoteList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView.builder(
+      padding: const EdgeInsets.all(12.0),
       itemCount: notes.length,
       itemBuilder: (context, index) {
         final note = notes[index];
-        return ListTile(
-          title: Text(note.title),
-          subtitle: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(note.content), // Note content
-              const SizedBox(height: 4), // Spacing
-              // Text('ID: ${note.id}'), // Note ID displayed here
-            ],
+        return Container(
+          margin: const EdgeInsets.only(bottom: 10.0),
+          child: Card(
+            elevation: 5, // Added more elevation for a shadow effect
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8), // Less curved border
+            ),
+            child: ListTile(
+              leading: const FlutterLogo(),
+              title: Text(
+                note.title,
+                style: const TextStyle(
+                  fontSize: 14, // Smaller font size for the title
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+              // Format the createdAt date and display it in the subtitle
+              subtitle: Text(
+                note.createdAt != null
+                    ? DateFormat.yMMMd().format(note.createdAt!) // Format date
+                    : 'No date available', // Handle null case
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Colors.black54,
+                ),
+              ),
+              trailing: const Icon(Icons.more_vert),
+              onTap: () => onNoteTap(note),
+            ),
           ),
-          onTap: () => onNoteTap(note),
         );
       },
     );

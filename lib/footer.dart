@@ -6,26 +6,16 @@ class Footer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.blue[50],
+      color: Colors.blueAccent,
       padding: const EdgeInsets.all(16.0),
-      child: const Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Text(
-            'NoteMate',
-            style: TextStyle(
-              fontSize: 40,
-              fontWeight: FontWeight.bold,
-              color: Colors.blue,
-            ),
+      child: const Center(
+        child: Text(
+          '© 2024 NoteMap',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 14,
           ),
-          SizedBox(height: 10),
-          Text(
-            'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus lacinia odio vitae vestibulum.',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 16, color: Colors.blueGrey),
-          ),
-        ],
+        ),
       ),
     );
   }

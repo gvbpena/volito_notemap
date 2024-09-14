@@ -5,7 +5,6 @@ import 'home/home.dart';
 import 'auth/login.dart';
 import 'auth/register.dart';
 import 'splash.dart';
-// import 'services/auth_service.dart'; // Ensure AuthService is set up for Firebase Authentication
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,11 +24,27 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Volito NoteApp',
       theme: ThemeData(
-        colorScheme:
-            ColorScheme.fromSeed(seedColor: Colors.deepPurple).copyWith(
-          surface: Colors.grey[50]!,
+        colorScheme: ColorScheme.fromSwatch(
+          primarySwatch: Colors.blue, // Set primary swatch to blue
+        ).copyWith(
+          primary: Colors.blue[800], // Darker blue for primary color
+          secondary: Colors.lightBlueAccent, // Light blue for accents
+          surface: Colors.blue[50], // Soft background tone
+          onPrimary: Colors.white, // Text color on primary buttons
+          onSurface: Colors.black, // Text color on surfaces
+        ),
+        textTheme: const TextTheme(
+          displayLarge: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 22,
+            color: Colors.blue, // Bold dark blue text for headings
+          ),
+          bodyLarge: TextStyle(
+            color: Colors.black87, // Dimmed black for body text
+          ),
         ),
       ),
       initialRoute: initialRoute, // Starts with the splash screen by default

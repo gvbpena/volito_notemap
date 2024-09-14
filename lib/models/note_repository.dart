@@ -62,7 +62,10 @@ class NoteRepository {
 
   // Update a note
   Future<void> updateNote(String id,
-      {String? title, String? content, LatLng? location}) async {
+      {String? title,
+      String? content,
+      LatLng? location,
+      required List imageUrls}) async {
     _checkAuth();
     final updateData = <String, dynamic>{};
 

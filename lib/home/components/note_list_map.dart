@@ -53,10 +53,6 @@ class NoteListMap extends StatelessWidget {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Notes Map'),
-        backgroundColor: Colors.blueAccent,
-      ),
       body: GoogleMap(
         initialCameraPosition: initialCameraPosition(),
         markers: createMarkers(),
