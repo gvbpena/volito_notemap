@@ -16,33 +16,19 @@ class HomeScreen extends StatefulWidget {
 }
 
 class HomeScreenState extends State<HomeScreen> {
-  final noteRepo = NoteRepository();
-  List<Note> filteredNotes = [];
+  final NoteRepository noteRepo = NoteRepository();
   String searchQuery = '';
   int currentIndex = 0;
 
   @override
   void initState() {
     super.initState();
-    loadNotes();
-  }
-
-  Future<void> loadNotes() async {
-    setState(() {
-      filteredNotes = noteRepo.getAllNotes() as List<Note>;
-    });
-  }
-
-  void filterNotes() {
-    setState(() {
-      filteredNotes = noteRepo.searchNotes(searchQuery);
-    });
+    // Load notes in real-time through a stream.
   }
 
   void onSearchChanged(String query) {
     setState(() {
       searchQuery = query;
-      filterNotes();
     });
   }
 
@@ -52,7 +38,7 @@ class HomeScreenState extends State<HomeScreen> {
       MaterialPageRoute(
           builder: (context) => NoteAdd(noteRepository: noteRepo)),
     );
-    loadNotes();
+    // After returning from NoteAdd, notes will automatically refresh since we use StreamBuilder.
   }
 
   void onBottomNavTap(int index) {
@@ -132,7 +118,7 @@ class HomeScreenState extends State<HomeScreen> {
             const Divider(height: 1, color: Colors.grey),
             Expanded(
               child: StreamBuilder<List<Note>>(
-                stream: noteRepo.getAllNotes(),
+                stream: noteRepo.getAllNotes(), // Real-time stream of notes.
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
@@ -144,12 +130,14 @@ class HomeScreenState extends State<HomeScreen> {
                     return const Center(child: Text('No notes available.'));
                   }
 
+                  // Filter notes based on the search query.
                   final notes = snapshot.data!
                       .where((note) => note.title
                           .toLowerCase()
                           .contains(searchQuery.toLowerCase()))
                       .toList();
 
+                  // Display either a list or a map of notes.
                   return currentIndex == 0
                       ? NoteList(
                           notes: notes,
@@ -158,7 +146,7 @@ class HomeScreenState extends State<HomeScreen> {
                               context,
                               MaterialPageRoute(
                                 builder: (context) => NoteView(
-                                  note: note, // Pass the Note object directly
+                                  note: note,
                                   noteRepository: noteRepo,
                                 ),
                               ),
@@ -172,7 +160,7 @@ class HomeScreenState extends State<HomeScreen> {
                               context,
                               MaterialPageRoute(
                                 builder: (context) => NoteView(
-                                  note: note, // Pass the Note object directly
+                                  note: note,
                                   noteRepository: noteRepo,
                                 ),
                               ),

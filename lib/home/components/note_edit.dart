@@ -1,5 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import '../../models/note_model.dart';
 import '../../models/note_repository.dart';
 
@@ -8,77 +11,81 @@ class NoteEdit extends StatefulWidget {
   final NoteRepository noteRepository;
 
   const NoteEdit({
-    super.key,
+    Key? key,
     required this.note,
     required this.noteRepository,
-  });
+  }) : super(key: key);
 
   @override
-  NoteEditState createState() => NoteEditState();
+  _NoteEditState createState() => _NoteEditState();
 }
 
-class NoteEditState extends State<NoteEdit> {
+class _NoteEditState extends State<NoteEdit> {
   late TextEditingController _titleController;
   late TextEditingController _contentController;
-  LatLng? _location;
+  LatLng? _selectedLocation;
+  List<String> _imageUrls = [];
+  final ImagePicker _picker = ImagePicker();
+  final FirebaseStorage _storage = FirebaseStorage.instance;
 
   @override
   void initState() {
     super.initState();
     _titleController = TextEditingController(text: widget.note.title);
     _contentController = TextEditingController(text: widget.note.content);
-    _location = widget.note.location ??
-        const LatLng(0, 0); // Default location if not set
+    _selectedLocation = widget.note.location;
+    _imageUrls = widget.note.imageUrls ?? [];
   }
 
-  @override
-  void dispose() {
-    _titleController.dispose();
-    _contentController.dispose();
-    super.dispose();
+  void _updateNote() async {
+    try {
+      await widget.noteRepository.updateNote(
+        widget.note.id!,
+        title: _titleController.text,
+        content: _contentController.text,
+        location: _selectedLocation,
+      );
+      Navigator.pop(context);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error updating note: $e')),
+      );
+    }
   }
 
-  Future<void> _saveNote() async {
-    final updatedTitle = _titleController.text;
-    final updatedContent = _contentController.text;
-
-    // Update the note in the repository
-    await widget.noteRepository.updateNote(
-      widget.note.id!,
-      title: updatedTitle,
-      content: updatedContent,
-      location: _location, // Save the updated location
-    );
-
-    // Create an updated Note object
-    final updatedNote = Note(
-      id: widget.note.id,
-      title: updatedTitle,
-      content: updatedContent,
-      createdAt: widget.note.createdAt,
-      location: _location,
-      authorId: widget.note.authorId,
-    );
-
-    // Pass the updated note back to the previous screen
-    // ignore: use_build_context_synchronously
-    Navigator.pop(context, updatedNote); // Pass the updated note
-  }
-
-  void _onMapCreated(GoogleMapController controller) {}
-
-  // This method updates the location when the user taps on the map
-  void _onMapTapped(LatLng position) {
+  void _onMapTap(LatLng location) {
     setState(() {
-      _location = position; // Update the note's location
+      _selectedLocation = location;
     });
   }
 
-  // This method updates the location when the marker is dragged
-  void _onMarkerDragged(LatLng newPosition) {
+  void _onMarkerDragEnd(LatLng newPosition) {
     setState(() {
-      _location = newPosition;
+      _selectedLocation = newPosition;
     });
+  }
+
+  Future<void> _pickImage() async {
+    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      // Upload image to Firebase Storage
+      final file = File(pickedFile.path);
+      try {
+        final storageRef = _storage
+            .ref()
+            .child('images/${DateTime.now().millisecondsSinceEpoch}');
+        final uploadTask = storageRef.putFile(file);
+        final snapshot = await uploadTask.whenComplete(() {});
+        final imageUrl = await snapshot.ref.getDownloadURL();
+        setState(() {
+          _imageUrls.add(imageUrl);
+        });
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error uploading image: $e')),
+        );
+      }
+    }
   }
 
   @override
@@ -86,63 +93,73 @@ class NoteEditState extends State<NoteEdit> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Edit Note'),
-        backgroundColor: Colors.blueAccent,
         actions: [
           IconButton(
             icon: const Icon(Icons.save),
-            onPressed: _saveNote,
+            onPressed: _updateNote,
           ),
         ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            TextField(
-              controller: _titleController,
-              decoration: const InputDecoration(labelText: 'Title'),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _contentController,
-              decoration: const InputDecoration(labelText: 'Content'),
-              maxLines: 5,
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: GoogleMap(
-                onMapCreated: _onMapCreated,
-                initialCameraPosition: CameraPosition(
-                  target: _location ??
-                      const LatLng(0, 0), // Start at the current note location
-                  zoom: 15,
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextField(
+                controller: _titleController,
+                decoration: const InputDecoration(labelText: 'Title'),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _contentController,
+                decoration: const InputDecoration(labelText: 'Content'),
+                maxLines: null,
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                height: 300,
+                child: GoogleMap(
+                  initialCameraPosition: const CameraPosition(
+                    target: LatLng(14.5995, 120.9842), // Default location
+                    zoom: 12,
+                  ),
+                  onTap: _onMapTap,
+                  markers: _selectedLocation != null
+                      ? {
+                          Marker(
+                            markerId: const MarkerId('selected-location'),
+                            position: _selectedLocation!,
+                            draggable: true,
+                            onDragEnd: _onMarkerDragEnd,
+                          ),
+                        }
+                      : {},
                 ),
-                markers: {
-                  if (_location != null)
-                    Marker(
-                      markerId: const MarkerId('editable_location'),
-                      position: _location!,
-                      draggable: true,
-                      onDragEnd:
-                          _onMarkerDragged, // Update location when marker is dragged
-                    ),
-                },
-                onTap: _onMapTapped, // Update location when the map is tapped
               ),
-            ),
-            const SizedBox(height: 16),
-            if (_location != null)
-              Column(
-                children: [
-                  Text('Latitude: ${_location!.latitude}'),
-                  Text('Longitude: ${_location!.longitude}'),
-                ],
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: _pickImage,
+                child: const Text('Add Image'),
               ),
-            ElevatedButton(
-              onPressed: _saveNote,
-              child: const Text('Save'),
-            ),
-          ],
+              const SizedBox(height: 16),
+              if (_imageUrls.isNotEmpty)
+                SizedBox(
+                  height: 100,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _imageUrls.length,
+                    itemBuilder: (context, index) {
+                      final imageUrl = _imageUrls[index];
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8.0),
+                        child: Image.network(imageUrl),
+                      );
+                    },
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );

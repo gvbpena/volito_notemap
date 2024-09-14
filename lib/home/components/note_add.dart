@@ -1,117 +1,153 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../models/note_model.dart';
 import '../../models/note_repository.dart';
+import '../../models/note_images.dart';
 
 class NoteAdd extends StatefulWidget {
   final NoteRepository noteRepository;
 
-  const NoteAdd({
-    super.key,
-    required this.noteRepository,
-  });
+  const NoteAdd({super.key, required this.noteRepository});
 
   @override
-  NoteAddState createState() => NoteAddState();
+  _NoteAddState createState() => _NoteAddState();
 }
 
-class NoteAddState extends State<NoteAdd> {
+class _NoteAddState extends State<NoteAdd> {
   final _titleController = TextEditingController();
   final _contentController = TextEditingController();
-  LatLng? _noteLocation;
+  LatLng? _selectedLocation;
+  List<File> _selectedImages = [];
+  final ImagePicker _picker = ImagePicker();
+  final NoteImages _noteImages = NoteImages();
 
-  @override
-  void dispose() {
-    _titleController.dispose();
-    _contentController.dispose();
-    super.dispose();
+  // Handle map tap to select location
+  void _onMapTap(LatLng position) {
+    setState(() {
+      _selectedLocation = position;
+    });
   }
 
-  Future<void> _addNote() async {
-    if (_titleController.text.isEmpty || _contentController.text.isEmpty) {
+  // Pick images from gallery
+  Future<void> _pickImages() async {
+    final pickedFiles = await _picker.pickMultiImage();
+    setState(() {
+      _selectedImages = pickedFiles.map((file) => File(file.path)).toList();
+    });
+  }
+
+  // Save note to Firestore
+  Future<void> _saveNote() async {
+    final title = _titleController.text.trim();
+    final content = _contentController.text.trim();
+
+    if (title.isEmpty || content.isEmpty || _selectedLocation == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Title and content cannot be empty')),
+        const SnackBar(
+            content: Text('Please complete all fields and select a location.')),
       );
       return;
     }
 
-    final note = Note(
-      title: _titleController.text,
-      content: _contentController.text,
-      createdAt: DateTime.now(),
-      location: _noteLocation,
-    );
-
-    await widget.noteRepository.addNote(note);
-    // ignore: use_build_context_synchronously
-    Navigator.pop(context);
-  }
-
-  void _pickLocation(LatLng location) {
-    setState(() {
-      _noteLocation = location;
-    });
+    try {
+      final imageUrls = await _noteImages.uploadImages(_selectedImages);
+      final note = Note(
+        title: title,
+        content: content,
+        createdAt: DateTime.now(),
+        location: _selectedLocation,
+        imageUrls: imageUrls,
+      );
+      await widget.noteRepository.addNote(note);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Note added successfully')),
+      );
+      Navigator.pop(context); // Close the add note page
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error adding note: $e')),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Add New Note'),
-        backgroundColor: Colors.greenAccent,
+        title: const Text('Add Note'),
         actions: [
           IconButton(
             icon: const Icon(Icons.check),
-            onPressed: _addNote,
+            onPressed: _saveNote, // Save the note when check button is pressed
           ),
         ],
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Title input
             TextField(
               controller: _titleController,
-              decoration: const InputDecoration(labelText: 'Note Title'),
+              decoration: const InputDecoration(labelText: 'Title'),
             ),
             const SizedBox(height: 16),
+
+            // Content input
             TextField(
               controller: _contentController,
-              decoration: const InputDecoration(labelText: 'Note Content'),
               maxLines: 5,
+              decoration: const InputDecoration(labelText: 'Content'),
             ),
             const SizedBox(height: 16),
-            const Text(
-              'Pick Location (optional):',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            _noteLocation != null
-                ? Text(
-                    'Selected Location: ${_noteLocation!.latitude}, ${_noteLocation!.longitude}',
-                    style: const TextStyle(fontSize: 16),
-                  )
-                : const Text('No location selected'),
-            const SizedBox(height: 16),
+
+            // Google Maps widget
             SizedBox(
-              height: 200,
+              height: 300,
               child: GoogleMap(
                 initialCameraPosition: const CameraPosition(
-                  target: LatLng(0, 0),
-                  zoom: 2,
+                  target: LatLng(14.5995, 120.9842), // Default location
+                  zoom: 12,
                 ),
-                onTap: _pickLocation,
-                markers: _noteLocation != null
+                onTap: _onMapTap, // Select location by tapping on the map
+                markers: _selectedLocation != null
                     ? {
                         Marker(
-                          markerId: const MarkerId('selected_location'),
-                          position: _noteLocation!,
+                          markerId: const MarkerId('selected-location'),
+                          position: _selectedLocation!,
                         ),
                       }
                     : {},
               ),
             ),
+            const SizedBox(height: 16),
+
+            // Pick images button
+            ElevatedButton.icon(
+              onPressed: _pickImages,
+              icon: const Icon(Icons.image),
+              label: const Text('Pick Images'),
+            ),
+            const SizedBox(height: 16),
+
+            // Display selected images
+            if (_selectedImages.isNotEmpty)
+              SizedBox(
+                height: 100,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _selectedImages.length,
+                  itemBuilder: (context, index) {
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8.0),
+                      child: Image.file(_selectedImages[index]),
+                    );
+                  },
+                ),
+              ),
           ],
         ),
       ),

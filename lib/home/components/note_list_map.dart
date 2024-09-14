@@ -15,7 +15,7 @@ class NoteListMap extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Create a set of markers from the notes
-    Set<Marker> _createMarkers() {
+    Set<Marker> createMarkers() {
       return notes.map((note) {
         final LatLng location = LatLng(
           note.location?.latitude ?? 0, // Use 0 as fallback for latitude
@@ -59,7 +59,7 @@ class NoteListMap extends StatelessWidget {
       ),
       body: GoogleMap(
         initialCameraPosition: initialCameraPosition(),
-        markers: _createMarkers(),
+        markers: createMarkers(),
         zoomControlsEnabled: true,
         myLocationButtonEnabled: false,
       ),
