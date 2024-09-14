@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import 'services/auth_service.dart';
 
 class SplashScreen extends StatelessWidget {
@@ -16,13 +15,41 @@ class SplashScreen extends StatelessWidget {
       Navigator.of(context).pushReplacementNamed(route);
     });
 
-    return const Scaffold(
+    return Scaffold(
       backgroundColor: Colors.blue,
       body: Center(
-        child: Text(
-          'Loading...',
-          style: TextStyle(
-              fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            TweenAnimationBuilder<double>(
+              tween: Tween<double>(begin: 0.0, end: 1.0),
+              duration: const Duration(seconds: 1),
+              builder: (context, value, child) {
+                return Opacity(
+                  opacity: value,
+                  child: Container(
+                    width: 100,
+                    height: 100,
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                );
+              },
+              onEnd: () {
+                // You can add logic here if needed when animation ends
+              },
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'Loading...',
+              style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white),
+            ),
+          ],
         ),
       ),
     );

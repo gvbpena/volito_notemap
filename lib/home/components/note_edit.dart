@@ -74,29 +74,57 @@ class _NoteEditState extends State<NoteEdit> {
   }
 
   Future<void> _pickImages() async {
-    final pickedFiles = await _picker.pickMultiImage(); // No images selected
-
-    final newImageUrls = await Future.wait(
-      pickedFiles.map((pickedFile) async {
-        final file = File(pickedFile.path);
-        try {
-          final storageRef = _storage
-              .ref()
-              .child('images/${DateTime.now().millisecondsSinceEpoch}');
-          final uploadTask = storageRef.putFile(file);
-          final snapshot = await uploadTask.whenComplete(() {});
-          return await snapshot.ref.getDownloadURL();
-        } catch (e) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error uploading image: $e')),
-          );
-          return '';
-        }
-      }),
+    final action = await showDialog<int>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Select Image Source'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.pop(context, 1),
+              child: const Text('Gallery'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, 2),
+              child: const Text('Cancel'),
+            ),
+          ],
+        );
+      },
     );
 
-    setState(
-        () => _imageUrls.addAll(newImageUrls.where((url) => url.isNotEmpty)));
+    if (action == null || action == 2) return; // Cancel or not selected
+
+    XFile? pickedFile;
+    if (action == 1) {
+      // Gallery
+      pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    }
+
+    if (pickedFile != null) {
+      final file = File(pickedFile.path);
+      try {
+        final storageRef = _storage
+            .ref()
+            .child('images/${DateTime.now().millisecondsSinceEpoch}');
+        final uploadTask = storageRef.putFile(file);
+        final snapshot = await uploadTask.whenComplete(() {});
+        final downloadUrl = await snapshot.ref.getDownloadURL();
+        setState(() {
+          _imageUrls.add(downloadUrl);
+        });
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error uploading image: $e')),
+        );
+      }
+    }
+  }
+
+  void _removeImage(String imageUrl) {
+    setState(() {
+      _imageUrls.remove(imageUrl);
+    });
   }
 
   @override
@@ -115,86 +143,142 @@ class _NoteEditState extends State<NoteEdit> {
         ],
         backgroundColor: Colors.blue,
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildTextField(_titleController, 'Title'),
-              const SizedBox(height: 16),
-              _buildTextField(_contentController, 'Content', maxLines: null),
-              const SizedBox(height: 16),
-              _buildMap(),
-              const SizedBox(height: 16),
-              _buildAddImagesButton(),
-              const SizedBox(height: 16),
-              if (_imageUrls.isNotEmpty) _buildImageList(),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTextField(TextEditingController controller, String label,
-      {int? maxLines}) {
-    return TextField(
-      controller: controller,
-      decoration: InputDecoration(labelText: label),
-      maxLines: maxLines,
-    );
-  }
-
-  Widget _buildMap() {
-    return SizedBox(
-      height: 400,
-      child: GoogleMap(
-        initialCameraPosition: const CameraPosition(
-          target: LatLng(14.5995, 120.9842),
-          zoom: 12,
-        ),
-        onTap: _onMapTap,
-        markers: _selectedLocation != null
-            ? {
-                Marker(
-                  markerId: const MarkerId('selected-location'),
-                  position: _selectedLocation!,
-                  draggable: true,
-                  onDragEnd: _onMarkerDragEnd,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Title input
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black26,
+                    blurRadius: 8,
+                    offset: Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: TextField(
+                controller: _titleController,
+                decoration: const InputDecoration(
+                  labelText: 'Title',
+                  contentPadding: EdgeInsets.symmetric(horizontal: 16.0),
+                  border: InputBorder.none,
                 ),
-              }
-            : {},
-      ),
-    );
-  }
-
-  Widget _buildAddImagesButton() {
-    return ElevatedButton(
-      onPressed: _pickImages,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.blue,
-      ),
-      child: const Text('Add Images'),
-    );
-  }
-
-  Widget _buildImageList() {
-    return SizedBox(
-      height: 120,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: _imageUrls.length,
-        itemBuilder: (context, index) {
-          final imageUrl = _imageUrls[index];
-          return Padding(
-            padding: const EdgeInsets.only(right: 8.0),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Image.network(imageUrl),
+                style: const TextStyle(fontSize: 16, color: Colors.black87),
+              ),
             ),
-          );
-        },
+            const SizedBox(height: 16),
+
+            // Content input
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black26,
+                    blurRadius: 8,
+                    offset: Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: TextField(
+                controller: _contentController,
+                maxLines: 5,
+                decoration: const InputDecoration(
+                  labelText: 'Content',
+                  contentPadding: EdgeInsets.symmetric(horizontal: 16.0),
+                  border: InputBorder.none,
+                ),
+                style: const TextStyle(fontSize: 16, color: Colors.black87),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Google Maps widget
+            SizedBox(
+              height: 300,
+              child: GoogleMap(
+                initialCameraPosition: CameraPosition(
+                  target: _selectedLocation ?? const LatLng(14.5995, 120.9842),
+                  zoom: 12,
+                ),
+                onTap: _onMapTap,
+                onCameraMove: (CameraPosition position) {
+                  setState(() {
+                    _selectedLocation = position.target;
+                  });
+                },
+                markers: _selectedLocation != null
+                    ? {
+                        Marker(
+                          markerId: const MarkerId('selected-location'),
+                          position: _selectedLocation!,
+                          draggable: true,
+                          onDragEnd: _onMarkerDragEnd,
+                        ),
+                      }
+                    : {},
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Pick images button
+            ElevatedButton.icon(
+              onPressed: _pickImages,
+              icon: const Icon(Icons.image, color: Colors.white),
+              label: const Text(
+                'Pick Images',
+                style: TextStyle(color: Colors.white),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Display selected images
+            if (_imageUrls.isNotEmpty)
+              SizedBox(
+                height: 100,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _imageUrls.length,
+                  itemBuilder: (context, index) {
+                    final imageUrl = _imageUrls[index];
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8.0),
+                      child: Stack(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.network(imageUrl),
+                          ),
+                          Positioned(
+                            top: 8,
+                            right: 8,
+                            child: IconButton(
+                              icon: const Icon(Icons.close, color: Colors.red),
+                              onPressed: () => _removeImage(imageUrl),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

@@ -49,6 +49,22 @@ class NoteView extends StatelessWidget {
     }
   }
 
+  void _showImage(BuildContext context, String imageUrl) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        child: SizedBox(
+          width: double.infinity,
+          height: double.infinity,
+          child: Image.network(
+            imageUrl,
+            fit: BoxFit.contain,
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final LatLng? location = note.location;
@@ -139,13 +155,16 @@ class NoteView extends StatelessWidget {
                     itemCount: note.imageUrls!.length,
                     itemBuilder: (context, index) {
                       final imageUrl = note.imageUrls![index];
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 8.0),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: Image.network(
-                            imageUrl,
-                            fit: BoxFit.cover,
+                      return GestureDetector(
+                        onTap: () => _showImage(context, imageUrl),
+                        child: Padding(
+                          padding: const EdgeInsets.only(right: 8.0),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.network(
+                              imageUrl,
+                              fit: BoxFit.cover,
+                            ),
                           ),
                         ),
                       );

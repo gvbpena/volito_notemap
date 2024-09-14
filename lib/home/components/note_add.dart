@@ -30,9 +30,10 @@ class _NoteAddState extends State<NoteAdd> {
     });
   }
 
-  // Pick images from gallery
+  // Pick images from gallery only
   Future<void> _pickImages() async {
     final pickedFiles = await _picker.pickMultiImage();
+
     setState(() {
       _selectedImages = pickedFiles.map((file) => File(file.path)).toList();
     });
