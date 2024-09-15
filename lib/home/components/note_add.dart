@@ -22,6 +22,7 @@ class _NoteAddState extends State<NoteAdd> {
   List<File> _selectedImages = [];
   final ImagePicker _picker = ImagePicker();
   final NoteImages _noteImages = NoteImages();
+  bool _isLoading = false; // Loading state
 
   // Handle map tap to select location
   void _onMapTap(LatLng position) {
@@ -47,10 +48,15 @@ class _NoteAddState extends State<NoteAdd> {
     if (title.isEmpty || content.isEmpty || _selectedLocation == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-            content: Text('Please complete all fields and select a location.')),
+          content: Text('Please complete all fields and select a location.'),
+        ),
       );
       return;
     }
+
+    setState(() {
+      _isLoading = true; // Show loading indicator
+    });
 
     try {
       final imageUrls = await _noteImages.uploadImages(_selectedImages);
@@ -70,7 +76,18 @@ class _NoteAddState extends State<NoteAdd> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error adding note: $e')),
       );
+    } finally {
+      setState(() {
+        _isLoading = false; // Hide loading indicator
+      });
     }
+  }
+
+  // Remove an image from the list
+  void _removeImage(File image) {
+    setState(() {
+      _selectedImages.remove(image);
+    });
   }
 
   @override
@@ -79,10 +96,22 @@ class _NoteAddState extends State<NoteAdd> {
       appBar: AppBar(
         title: const Text('Add Note'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.check),
-            onPressed: _saveNote, // Save the note when check button is pressed
-          ),
+          _isLoading
+              ? Center(
+                  child: SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
+                    ),
+                  ),
+                )
+              : IconButton(
+                  icon: const Icon(Icons.check),
+                  onPressed:
+                      _saveNote, // Save the note when check button is pressed
+                ),
         ],
       ),
       body: SingleChildScrollView(
@@ -189,11 +218,24 @@ class _NoteAddState extends State<NoteAdd> {
                   scrollDirection: Axis.horizontal,
                   itemCount: _selectedImages.length,
                   itemBuilder: (context, index) {
+                    final image = _selectedImages[index];
                     return Padding(
                       padding: const EdgeInsets.only(right: 8.0),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.file(_selectedImages[index]),
+                      child: Stack(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.file(image),
+                          ),
+                          Positioned(
+                            top: 8,
+                            right: 8,
+                            child: IconButton(
+                              icon: const Icon(Icons.delete, color: Colors.red),
+                              onPressed: () => _removeImage(image),
+                            ),
+                          ),
+                        ],
                       ),
                     );
                   },

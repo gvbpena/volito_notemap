@@ -14,11 +14,17 @@ class NoteList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Sort notes by createdAt in descending order
+    final sortedNotes =
+        List<Note>.from(notes); // Create a copy of the notes list
+    sortedNotes.sort(
+        (a, b) => b.createdAt?.compareTo(a.createdAt ?? DateTime.now()) ?? 1);
+
     return ListView.builder(
       padding: const EdgeInsets.all(12.0),
-      itemCount: notes.length,
+      itemCount: sortedNotes.length,
       itemBuilder: (context, index) {
-        final note = notes[index];
+        final note = sortedNotes[index];
         return Container(
           margin: const EdgeInsets.only(bottom: 10.0),
           child: Card(
