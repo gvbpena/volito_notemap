@@ -1,6 +1,6 @@
 {
-    "name": "flutter_app",
-    "short_name": "flutter_app",
+    "name": "volito_mobile_test",
+    "short_name": "volito_mobile_test",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

@@ -203,7 +203,7 @@ class HomeScreenState extends State<HomeScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Welcome $userName!',
+                      'Welcome, $userName!',
                       style: const TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,

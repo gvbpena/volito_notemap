@@ -121,11 +121,11 @@ class _NoteEditState extends State<NoteEdit> {
   //   }
   // }
 
-  void _removeImage(String imageUrl) {
-    setState(() {
-      _imageUrls.remove(imageUrl);
-    });
-  }
+  // void _removeImage(String imageUrl) {
+  //   setState(() {
+  //     _imageUrls.remove(imageUrl);
+  //   });
+  // }
 
   @override
   Widget build(BuildContext context) {

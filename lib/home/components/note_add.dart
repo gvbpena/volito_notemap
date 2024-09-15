@@ -97,7 +97,7 @@ class _NoteAddState extends State<NoteAdd> {
         title: const Text('Add Note'),
         actions: [
           _isLoading
-              ? Center(
+              ? const Center(
                   child: SizedBox(
                     width: 24,
                     height: 24,
