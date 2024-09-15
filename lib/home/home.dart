@@ -143,6 +143,39 @@ class HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Future<void> _handleLogout() async {
+    final shouldLogout = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Logout'),
+          content: const Text('Are you sure you want to logout?'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Logout'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldLogout == true) {
+      await AuthService().signOut();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Successfully logged out!'),
+        ),
+      );
+      // ignore: use_build_context_synchronously
+      Navigator.pushReplacementNamed(context, '/login');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -155,11 +188,7 @@ class HomeScreenState extends State<HomeScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.logout, size: 28),
-            onPressed: () async {
-              await AuthService().signOut();
-              // ignore: use_build_context_synchronously
-              Navigator.pushReplacementNamed(context, '/login');
-            },
+            onPressed: _handleLogout,
           ),
         ],
       ),
