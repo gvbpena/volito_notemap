@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../models/note_model.dart';
 import '../../models/note_repository.dart';
 
@@ -23,6 +26,9 @@ class _NoteEditState extends State<NoteEdit> {
   LatLng? _selectedLocation;
   List<String> _imageUrls = [];
   bool _isLoading = false;
+  // ignore: unused_field
+  List<File> _selectedImages = [];
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
@@ -58,6 +64,29 @@ class _NoteEditState extends State<NoteEdit> {
     } finally {
       setState(() => _isLoading = false);
     }
+  }
+
+  Future<void> _pickImages() async {
+    final pickedFiles = await _picker.pickMultiImage();
+    setState(() {
+      _selectedImages = pickedFiles.map((file) => File(file.path)).toList();
+    });
+  }
+
+  void _showImage(File image) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        child: SizedBox(
+          width: double.infinity,
+          height: double.infinity,
+          child: Image.file(
+            image,
+            fit: BoxFit.contain,
+          ),
+        ),
+      ),
+    );
   }
 
   void _onMapTap(LatLng location) {
@@ -163,7 +192,7 @@ class _NoteEditState extends State<NoteEdit> {
 
             // Google Maps widget
             SizedBox(
-              height: 450,
+              height: 350,
               child: GoogleMap(
                 initialCameraPosition: CameraPosition(
                   target: _selectedLocation ?? const LatLng(14.5995, 120.9842),
@@ -182,6 +211,76 @@ class _NoteEditState extends State<NoteEdit> {
                     : {},
               ),
             ),
+            const Text(
+              'Images',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const Divider(),
+            ElevatedButton.icon(
+              onPressed: _pickImages,
+              icon: const Icon(Icons.image, color: Colors.white),
+              label: const Text(
+                'Pick Images',
+                style: TextStyle(color: Colors.white),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+              ),
+            ),
+            const SizedBox(height: 16),
+            if (widget.note.images.isNotEmpty)
+              SizedBox(
+                height: 120,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: widget.note.images.length,
+                  itemBuilder: (context, index) {
+                    final imageUrl = widget.note.images[index];
+                    return GestureDetector(
+                      onTap: () => _showImage(File(imageUrl)),
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 8.0),
+                        child: Stack(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.network(
+                                imageUrl,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                            Positioned(
+                              top: 8,
+                              right: 8,
+                              child: IconButton(
+                                icon:
+                                    const Icon(Icons.delete, color: Colors.red),
+                                onPressed: () => (), //_removeImage(imageUrl)
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              )
+            else
+              const Text(
+                "No images uploaded.",
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey,
+                ),
+              ),
           ],
         ),
       ),

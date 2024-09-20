@@ -7,7 +7,7 @@ class Note {
   final DateTime? createdAt;
   final LatLng? location;
   final String? authorId;
-  final List<String>? imageUrls; // Add imageUrls field
+  final List<String>? imageUrls;
 
   Note({
     this.id,
@@ -34,7 +34,9 @@ class Note {
       authorId: data['authorId'] as String?,
       imageUrls: (data['imageUrls'] as List<dynamic>?)
           ?.map((e) => e as String)
-          .toList(), // Parse imageUrls
+          .toList(),
     );
   }
+
+  List<String> get images => imageUrls ?? [];
 }

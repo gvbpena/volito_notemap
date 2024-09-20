@@ -61,11 +61,12 @@ class NoteRepository {
   }
 
   // Update a note
+// Update the method signature
   Future<void> updateNote(String id,
       {String? title,
       String? content,
       LatLng? location,
-      required List imageUrls}) async {
+      List<String>? imageUrls}) async {
     _checkAuth();
     final updateData = <String, dynamic>{};
 
@@ -77,8 +78,11 @@ class NoteRepository {
         'longitude': location.longitude,
       };
     }
+    if (imageUrls != null) {
+      updateData['imageUrls'] = imageUrls;
+    }
 
-    if (updateData.isEmpty) return; // Nothing to update
+    if (updateData.isEmpty) return;
 
     try {
       await _noteCollection.doc(id).update(updateData);

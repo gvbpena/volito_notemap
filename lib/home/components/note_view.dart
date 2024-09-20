@@ -148,6 +148,20 @@ class NoteView extends StatelessWidget {
                   ),
                 ),
               const SizedBox(height: 16),
+              const Text(
+                "Images",
+                style: TextStyle(
+                  fontSize: 20, // Equivalent to an h3 font size
+                  fontWeight: FontWeight.bold, // Makes the text bold
+                  color: Colors
+                      .black, // Set color to black or any other color you prefer
+                ),
+              ),
+              const Divider(
+                color: Colors.black12, // Color of the divider
+                thickness: 1, // Thickness of the divider line
+                height: 16, // Space around the divider
+              ),
               if (note.imageUrls != null && note.imageUrls!.isNotEmpty)
                 SizedBox(
                   height: 120, // Height for the image carousel
@@ -172,6 +186,15 @@ class NoteView extends StatelessWidget {
                         ),
                       );
                     },
+                  ),
+                )
+              else
+                const Text(
+                  "No images uploaded.",
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors
+                        .grey, // Use grey to indicate disabled or missing content
                   ),
                 ),
             ],
