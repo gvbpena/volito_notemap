@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-// import 'package:firebase_auth/firebase_auth.dart';
-// import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../services/auth_service.dart';
 import 'components/note_add.dart';
 import 'components/note_list.dart';
@@ -32,6 +30,7 @@ class HomeScreenState extends State<HomeScreen> {
   Future<void> fetchUserData() async {
     final authService = AuthService();
     final user = authService.currentUser;
+
     if (user != null) {
       final name = await authService.getUserName();
       setState(() {
@@ -54,7 +53,6 @@ class HomeScreenState extends State<HomeScreen> {
         builder: (context) => NoteAdd(noteRepository: noteRepo),
       ),
     );
-    // After returning from NoteAdd, notes will automatically refresh since we use StreamBuilder.
   }
 
   void onBottomNavTap(int index) {
@@ -66,7 +64,7 @@ class HomeScreenState extends State<HomeScreen> {
   Widget buildListView() {
     return Expanded(
       child: StreamBuilder<List<Note>>(
-        stream: noteRepo.getAllNotes(), // Real-time stream of notes.
+        stream: noteRepo.getAllNotes(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -78,7 +76,6 @@ class HomeScreenState extends State<HomeScreen> {
             return const Center(child: Text('No notes available.'));
           }
 
-          // Filter notes based on the search query.
           final notes = snapshot.data!
               .where((note) =>
                   note.title.toLowerCase().contains(searchQuery.toLowerCase()))
@@ -106,7 +103,7 @@ class HomeScreenState extends State<HomeScreen> {
   Widget buildMapView() {
     return Expanded(
       child: StreamBuilder<List<Note>>(
-        stream: noteRepo.getAllNotes(), // Real-time stream of notes.
+        stream: noteRepo.getAllNotes(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -118,7 +115,6 @@ class HomeScreenState extends State<HomeScreen> {
             return const Center(child: Text('No notes available.'));
           }
 
-          // Filter notes based on the search query.
           final notes = snapshot.data!
               .where((note) =>
                   note.title.toLowerCase().contains(searchQuery.toLowerCase()))
@@ -148,16 +144,19 @@ class HomeScreenState extends State<HomeScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Logout'),
-          content: const Text('Are you sure you want to logout?'),
+          title: const Text('Logout', style: TextStyle(color: Colors.black)),
+          content: const Text('Are you sure you want to logout?',
+              style: TextStyle(color: Colors.black)),
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
+              child:
+                  const Text('Cancel', style: TextStyle(color: Colors.black)),
             ),
             TextButton(
               onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Logout'),
+              child:
+                  const Text('Logout', style: TextStyle(color: Colors.black)),
             ),
           ],
         );
@@ -171,7 +170,6 @@ class HomeScreenState extends State<HomeScreen> {
           content: Text('Successfully logged out!'),
         ),
       );
-      // ignore: use_build_context_synchronously
       Navigator.pushReplacementNamed(context, '/login');
     }
   }
@@ -179,16 +177,27 @@ class HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.blue[50],
+      backgroundColor: Colors.white,
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: const Text('NoteMap',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.blueAccent,
+        title: const Text(
+          'NoteMap',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
+          ),
+        ),
+        backgroundColor: Colors.white,
+        iconTheme: const IconThemeData(color: Colors.black),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout, size: 28),
             onPressed: _handleLogout,
+            splashRadius: 24,
+            tooltip: 'Logout',
+            color: Colors.black,
+            hoverColor: Colors.grey[200],
           ),
         ],
       ),
@@ -207,24 +216,22 @@ class HomeScreenState extends State<HomeScreen> {
                       style: const TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
-                        color: Colors.blueAccent,
+                        color: Colors.black,
                       ),
                     ),
                     Text(
                       'Email: ${userEmail ?? 'Not available'}',
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 14,
-                        color: Colors
-                            .blueGrey[800], // Darker gray for the description
+                        color: Colors.black54,
                       ),
                     ),
                     const SizedBox(height: 5),
-                    Text(
+                    const Text(
                       "Capture and organize your notes with map integration for easy location tagging and seamless note management.",
                       style: TextStyle(
                         fontSize: 16,
-                        color: Colors
-                            .blueGrey[800], // Darker gray for the description
+                        color: Colors.black54,
                       ),
                     ),
                   ],
@@ -233,40 +240,24 @@ class HomeScreenState extends State<HomeScreen> {
               Padding(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white
-                          .withOpacity(0.8), // Slightly opaque background
+                child: TextField(
+                  onChanged: onSearchChanged,
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: Colors.grey[200],
+                    border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          spreadRadius: 2,
-                          blurRadius: 8,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
+                      borderSide: BorderSide.none,
                     ),
-                    child: TextField(
-                      onChanged: onSearchChanged,
-                      decoration: InputDecoration(
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
-                        prefixIcon:
-                            const Icon(Icons.search, color: Colors.blueAccent),
-                        hintText: "Search notes",
-                        hintStyle:
-                            TextStyle(color: Colors.grey[600], fontSize: 16),
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 16), // Adjust vertical padding for height
-                        isDense: false, // Ensures padding changes are applied
-                      ),
-                      style: const TextStyle(
-                          fontSize: 16), // Adjust text size if needed
-                    )),
+                    prefixIcon: const Icon(Icons.search, color: Colors.black),
+                    hintText: "Search notes",
+                    hintStyle:
+                        const TextStyle(color: Colors.black38, fontSize: 16),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 16),
+                  ),
+                  style: const TextStyle(fontSize: 16, color: Colors.black),
+                ),
               ),
             ],
             currentIndex == 0 ? buildListView() : buildMapView(),
@@ -276,16 +267,18 @@ class HomeScreenState extends State<HomeScreen> {
       floatingActionButton: currentIndex == 0
           ? FloatingActionButton.extended(
               onPressed: openAddNoteScreen,
-              backgroundColor: Colors.blueAccent,
-              icon: const Icon(Icons.add),
-              label: const Text('Add Note'),
+              backgroundColor: Colors.black,
+              icon: const Icon(Icons.add, color: Colors.white),
+              label:
+                  const Text('Add Note', style: TextStyle(color: Colors.white)),
             )
           : null,
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: currentIndex,
         onTap: onBottomNavTap,
-        selectedItemColor: Colors.blueAccent,
+        selectedItemColor: Colors.black,
         unselectedItemColor: Colors.grey,
+        backgroundColor: Colors.white,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.list), label: 'List'),
           BottomNavigationBarItem(icon: Icon(Icons.map), label: 'Map'),

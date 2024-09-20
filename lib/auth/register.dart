@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../services/auth_service.dart';
-import '../../footer.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -46,15 +45,6 @@ class RegisterScreenState extends State<RegisterScreen> {
       backgroundColor: Colors.white,
       body: Stack(
         children: [
-          Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Colors.blueAccent, Colors.lightBlueAccent],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
-            ),
-          ),
           SafeArea(
             child: Column(
               children: [
@@ -65,14 +55,14 @@ class RegisterScreenState extends State<RegisterScreen> {
                           horizontal: 24.0, vertical: 40.0),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: <Widget>[
-                          const Row(
+                          Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Icon(
                                 Icons.person_add_alt_1,
-                                color: Colors.white,
+                                color: Colors.black,
                                 size: 36,
                               ),
                               SizedBox(width: 10),
@@ -81,42 +71,33 @@ class RegisterScreenState extends State<RegisterScreen> {
                                 style: TextStyle(
                                   fontSize: 36,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                  shadows: [
-                                    Shadow(
-                                      offset: Offset(0.0, 4.0),
-                                      blurRadius: 10.0,
-                                      color: Colors.black38,
-                                    ),
-                                  ],
+                                  color: Colors.black,
+                                  letterSpacing: -0.5,
                                 ),
                               ),
                             ],
                           ),
                           const SizedBox(height: 10),
-                          Center(
-                            child: Text(
-                              'Join us and start organizing your notes with map integration.',
-                              style: TextStyle(
-                                fontSize: 18,
-                                color: Colors.white.withOpacity(0.8),
-                              ),
-                              textAlign: TextAlign.center,
+                          Text(
+                            'Join us and start organizing your notes with map integration.',
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: Colors.grey[600],
+                              height: 1.5,
                             ),
+                            textAlign: TextAlign.center,
                           ),
                           const SizedBox(height: 40),
                           TextField(
                             controller: _nameController,
                             decoration: InputDecoration(
                               filled: true,
-                              fillColor: Colors.white.withOpacity(0.9),
-                              hintStyle: TextStyle(color: Colors.grey[400]),
+                              fillColor: Colors.grey[100],
                               hintText: 'Full Name',
-                              labelStyle: const TextStyle(color: Colors.grey),
-                              prefixIcon: const Icon(Icons.person,
-                                  color: Colors.blueAccent),
+                              labelStyle: TextStyle(color: Colors.grey[400]),
+                              prefixIcon: const Icon(Icons.person),
                               border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12.0),
+                                borderRadius: BorderRadius.circular(10.0),
                                 borderSide: BorderSide.none,
                               ),
                             ),
@@ -126,14 +107,12 @@ class RegisterScreenState extends State<RegisterScreen> {
                             controller: _emailController,
                             decoration: InputDecoration(
                               filled: true,
-                              fillColor: Colors.white.withOpacity(0.9),
-                              hintStyle: TextStyle(color: Colors.grey[400]),
+                              fillColor: Colors.grey[100],
                               hintText: 'Email',
-                              labelStyle: const TextStyle(color: Colors.grey),
-                              prefixIcon: const Icon(Icons.email,
-                                  color: Colors.blueAccent),
+                              labelStyle: TextStyle(color: Colors.grey[400]),
+                              prefixIcon: const Icon(Icons.email),
                               border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12.0),
+                                borderRadius: BorderRadius.circular(10.0),
                                 borderSide: BorderSide.none,
                               ),
                             ),
@@ -144,14 +123,12 @@ class RegisterScreenState extends State<RegisterScreen> {
                             obscureText: true,
                             decoration: InputDecoration(
                               filled: true,
-                              fillColor: Colors.white.withOpacity(0.9),
-                              hintStyle: TextStyle(color: Colors.grey[400]),
+                              fillColor: Colors.grey[100],
                               hintText: 'Password',
-                              labelStyle: const TextStyle(color: Colors.grey),
-                              prefixIcon: const Icon(Icons.lock,
-                                  color: Colors.blueAccent),
+                              labelStyle: TextStyle(color: Colors.grey[400]),
+                              prefixIcon: const Icon(Icons.lock),
                               border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12.0),
+                                borderRadius: BorderRadius.circular(10.0),
                                 borderSide: BorderSide.none,
                               ),
                             ),
@@ -162,14 +139,12 @@ class RegisterScreenState extends State<RegisterScreen> {
                             obscureText: true,
                             decoration: InputDecoration(
                               filled: true,
-                              fillColor: Colors.white.withOpacity(0.9),
-                              hintStyle: TextStyle(color: Colors.grey[400]),
+                              fillColor: Colors.grey[100],
                               hintText: 'Confirm Password',
-                              labelStyle: const TextStyle(color: Colors.grey),
-                              prefixIcon: const Icon(Icons.lock,
-                                  color: Colors.blueAccent),
+                              labelStyle: TextStyle(color: Colors.grey[400]),
+                              prefixIcon: const Icon(Icons.lock),
                               border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12.0),
+                                borderRadius: BorderRadius.circular(10.0),
                                 borderSide: BorderSide.none,
                               ),
                             ),
@@ -178,11 +153,11 @@ class RegisterScreenState extends State<RegisterScreen> {
                           ElevatedButton(
                             onPressed: _register,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.white.withOpacity(0.8),
-                              foregroundColor: Colors.blueAccent,
+                              backgroundColor: Colors.black,
+                              foregroundColor: Colors.white,
                               minimumSize: const Size(double.infinity, 50),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12.0),
+                                borderRadius: BorderRadius.circular(10.0),
                               ),
                             ),
                             child: const Text('Register',
@@ -205,7 +180,7 @@ class RegisterScreenState extends State<RegisterScreen> {
                               child: const Text(
                                 "Already have an account? Login",
                                 style: TextStyle(
-                                    color: Colors.white, fontSize: 16),
+                                    color: Colors.black, fontSize: 16),
                               ),
                             ),
                           ),
@@ -214,7 +189,6 @@ class RegisterScreenState extends State<RegisterScreen> {
                     ),
                   ),
                 ),
-                const Footer(),
               ],
             ),
           ),

@@ -15,8 +15,7 @@ class NoteList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Sort notes by createdAt in descending order
-    final sortedNotes =
-        List<Note>.from(notes); // Create a copy of the notes list
+    final sortedNotes = List<Note>.from(notes);
     sortedNotes.sort(
         (a, b) => b.createdAt?.compareTo(a.createdAt ?? DateTime.now()) ?? 1);
 
@@ -28,31 +27,33 @@ class NoteList extends StatelessWidget {
         return Container(
           margin: const EdgeInsets.only(bottom: 10.0),
           child: Card(
-            elevation: 5, // Added more elevation for a shadow effect
+            color: Colors.white, // White background for the card
+            elevation: 1, // Minimal shadow
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8), // Less curved border
+              borderRadius: BorderRadius.circular(8),
             ),
             child: ListTile(
-              leading: const FlutterLogo(),
+              contentPadding: const EdgeInsets.all(16.0),
+              leading: const FlutterLogo(size: 40),
               title: Text(
                 note.title,
                 style: const TextStyle(
-                  fontSize: 14, // Smaller font size for the title
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black,
                 ),
               ),
-              // Format the createdAt date and display it in the subtitle
               subtitle: Text(
                 note.createdAt != null
-                    ? DateFormat.yMMMd().format(note.createdAt!) // Format date
-                    : 'No date available', // Handle null case
+                    ? DateFormat.yMMMd().format(note.createdAt!)
+                    : 'No date available',
                 style: const TextStyle(
-                  fontSize: 12,
+                  fontSize: 14,
                   color: Colors.black54,
                 ),
               ),
-              trailing: const Icon(Icons.more_vert),
+              trailing: const Icon(Icons.more_vert,
+                  color: Colors.black54), // Black icon
               onTap: () => onNoteTap(note),
             ),
           ),

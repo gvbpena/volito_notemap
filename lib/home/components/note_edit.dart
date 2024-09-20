@@ -1,8 +1,5 @@
-// import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-// import 'package:image_picker/image_picker.dart';
-// import 'package:firebase_storage/firebase_storage.dart';
 import '../../models/note_model.dart';
 import '../../models/note_repository.dart';
 
@@ -25,8 +22,6 @@ class _NoteEditState extends State<NoteEdit> {
   late TextEditingController _contentController;
   LatLng? _selectedLocation;
   List<String> _imageUrls = [];
-  // final ImagePicker _picker = ImagePicker();
-  // final FirebaseStorage _storage = FirebaseStorage.instance;
   bool _isLoading = false;
 
   @override
@@ -73,77 +68,43 @@ class _NoteEditState extends State<NoteEdit> {
     setState(() => _selectedLocation = newPosition);
   }
 
-  // Future<void> _pickImages() async {
-  //   final action = await showDialog<int>(
-  //     context: context,
-  //     builder: (BuildContext context) {
-  //       return AlertDialog(
-  //         title: const Text('Select Image Source'),
-  //         actions: <Widget>[
-  //           TextButton(
-  //             onPressed: () => Navigator.pop(context, 1),
-  //             child: const Text('Gallery'),
-  //           ),
-  //           TextButton(
-  //             onPressed: () => Navigator.pop(context, 2),
-  //             child: const Text('Cancel'),
-  //           ),
-  //         ],
-  //       );
-  //     },
-  //   );
-
-  //   if (action == null || action == 2) return; // Cancel or not selected
-
-  //   XFile? pickedFile;
-  //   if (action == 1) {
-  //     // Gallery
-  //     pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-  //   }
-
-  //   if (pickedFile != null) {
-  //     final file = File(pickedFile.path);
-  //     try {
-  //       final storageRef = _storage
-  //           .ref()
-  //           .child('images/${DateTime.now().millisecondsSinceEpoch}');
-  //       final uploadTask = storageRef.putFile(file);
-  //       final snapshot = await uploadTask.whenComplete(() {});
-  //       final downloadUrl = await snapshot.ref.getDownloadURL();
-  //       setState(() {
-  //         _imageUrls.add(downloadUrl);
-  //       });
-  //     } catch (e) {
-  //       ScaffoldMessenger.of(context).showSnackBar(
-  //         SnackBar(content: Text('Error uploading image: $e')),
-  //       );
-  //     }
-  //   }
-  // }
-
-  // void _removeImage(String imageUrl) {
-  //   setState(() {
-  //     _imageUrls.remove(imageUrl);
-  //   });
-  // }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white, // Set background color to white
       appBar: AppBar(
         title: const Text('Edit Note'),
         actions: [
           if (_isLoading)
             const Center(child: CircularProgressIndicator())
           else
-            ElevatedButton.icon(
-              icon: const Icon(Icons.save),
-              label: const Text('Save'),
-              onPressed: _updateNote,
+            Padding(
+              padding: const EdgeInsets.only(
+                  right: 16.0, left: 8.0), // Add left padding
+              child: TextButton(
+                onPressed: _updateNote,
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16.0),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    side: const BorderSide(
+                        color: Colors.black26), // Optional border
+                  ),
+                ),
+                child: const Text(
+                  'Save',
+                  style: TextStyle(
+                    color: Colors.black26,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
             ),
         ],
-        backgroundColor: Colors.blue,
+        backgroundColor: Colors.white,
+        elevation: 0,
       ),
+
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -199,24 +160,7 @@ class _NoteEditState extends State<NoteEdit> {
               ),
             ),
             const SizedBox(height: 16),
-            // SizedBox(
-            //   height: 450,
-            //   child: GoogleMap(
-            //     initialCameraPosition: CameraPosition(
-            //       target: _selectedLocation ?? const LatLng(14.5995, 120.9842),
-            //       zoom: 12,
-            //     ),
-            //     onTap: _onMapTap, // Select location by tapping on the map
-            //     markers: _selectedLocation != null
-            //         ? {
-            //             Marker(
-            //               markerId: const MarkerId('selected-location'),
-            //               position: _selectedLocation!,
-            //             ),
-            //           }
-            //         : {},
-            //   ),
-            // ),
+
             // Google Maps widget
             SizedBox(
               height: 450,
@@ -226,11 +170,6 @@ class _NoteEditState extends State<NoteEdit> {
                   zoom: 12,
                 ),
                 onTap: _onMapTap,
-                // onCameraMove: (CameraPosition position) {
-                //   setState(() {
-                //     _selectedLocation = position.target;
-                //   });
-                // },
                 markers: _selectedLocation != null
                     ? {
                         Marker(
@@ -243,58 +182,6 @@ class _NoteEditState extends State<NoteEdit> {
                     : {},
               ),
             ),
-            // const SizedBox(height: 16),
-
-            // Pick images button
-            // ElevatedButton.icon(
-            //   onPressed: _pickImages,
-            //   icon: const Icon(Icons.image, color: Colors.white),
-            //   label: const Text(
-            //     'Pick Images',
-            //     style: TextStyle(color: Colors.white),
-            //   ),
-            //   style: ElevatedButton.styleFrom(
-            //     backgroundColor: Colors.blue,
-            //     shape: RoundedRectangleBorder(
-            //       borderRadius: BorderRadius.circular(8),
-            //     ),
-            //     padding:
-            //         const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-            //   ),
-            // ),
-            // const SizedBox(height: 16),
-
-            // Display selected images
-            // if (_imageUrls.isNotEmpty)
-            //   SizedBox(
-            //     height: 100,
-            //     child: ListView.builder(
-            //       scrollDirection: Axis.horizontal,
-            //       itemCount: _imageUrls.length,
-            //       itemBuilder: (context, index) {
-            //         final imageUrl = _imageUrls[index];
-            //         return Padding(
-            //           padding: const EdgeInsets.only(right: 8.0),
-            //           child: Stack(
-            //             children: [
-            //               ClipRRect(
-            //                 borderRadius: BorderRadius.circular(8),
-            //                 child: Image.network(imageUrl),
-            //               ),
-            //               Positioned(
-            //                 top: 8,
-            //                 right: 8,
-            //                 child: IconButton(
-            //                   icon: const Icon(Icons.close, color: Colors.red),
-            //                   onPressed: () => _removeImage(imageUrl),
-            //                 ),
-            //               ),
-            //             ],
-            //           ),
-            //         );
-            //       },
-            //     ),
-            //   ),
           ],
         ),
       ),

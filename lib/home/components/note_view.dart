@@ -39,8 +39,7 @@ class NoteView extends StatelessWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Note deleted successfully')),
         );
-        Navigator.pushReplacementNamed(
-            context, '/home'); // Navigate back to home screen
+        Navigator.pushReplacementNamed(context, '/home');
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error deleting note: $e')),
@@ -74,7 +73,7 @@ class NoteView extends StatelessWidget {
         title: const Text('View Note'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.edit, color: Colors.white),
+            icon: const Icon(Icons.edit, color: Colors.black),
             onPressed: () {
               Navigator.push(
                 context,
@@ -87,13 +86,15 @@ class NoteView extends StatelessWidget {
               );
             },
           ),
-          IconButton(
-            icon:
-                const Icon(Icons.delete, color: Colors.red), // Red delete icon
-            onPressed: () => _deleteNoteAndNavigate(context),
+          Padding(
+            padding: const EdgeInsets.only(right: 16.0, left: 8.0),
+            child: IconButton(
+              icon: const Icon(Icons.delete, color: Colors.red),
+              onPressed: () => _deleteNoteAndNavigate(context),
+            ),
           ),
         ],
-        backgroundColor: Colors.blue, // Blue theme color
+        backgroundColor: Colors.white,
         elevation: 0,
       ),
       body: SingleChildScrollView(
@@ -107,7 +108,7 @@ class NoteView extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
-                  color: Colors.blue, // Blue theme color
+                  color: Colors.black,
                 ),
               ),
               const SizedBox(height: 8),
@@ -118,7 +119,7 @@ class NoteView extends StatelessWidget {
               const SizedBox(height: 16),
               if (location != null)
                 Container(
-                  height: 400, // Increased height for the map
+                  height: 400,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: const [
@@ -149,9 +150,9 @@ class NoteView extends StatelessWidget {
               const SizedBox(height: 16),
               if (note.imageUrls != null && note.imageUrls!.isNotEmpty)
                 SizedBox(
-                  height: 120,
+                  height: 120, // Height for the image carousel
                   child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
+                    scrollDirection: Axis.horizontal, // Horizontal scroll
                     itemCount: note.imageUrls!.length,
                     itemBuilder: (context, index) {
                       final imageUrl = note.imageUrls![index];
@@ -164,6 +165,8 @@ class NoteView extends StatelessWidget {
                             child: Image.network(
                               imageUrl,
                               fit: BoxFit.cover,
+                              width: 120,
+                              height: 120, // Set image size
                             ),
                           ),
                         ),
@@ -175,6 +178,7 @@ class NoteView extends StatelessWidget {
           ),
         ),
       ),
+      backgroundColor: Colors.white,
     );
   }
 }
