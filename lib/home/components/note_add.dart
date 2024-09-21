@@ -170,15 +170,16 @@ class _NoteAddState extends State<NoteAdd> {
             // Pick images button
             ElevatedButton.icon(
               onPressed: _pickImages,
-              icon: const Icon(Icons.image, color: Colors.white),
+              icon: const Icon(Icons.add_a_photo, color: Colors.black),
               label: const Text(
-                'Pick Images',
-                style: TextStyle(color: Colors.white),
+                'Add Images',
+                style: TextStyle(color: Colors.black),
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue,
+                backgroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
+                  side: const BorderSide(color: Colors.black), // Add a border
                 ),
                 padding:
                     const EdgeInsets.symmetric(vertical: 12, horizontal: 16),

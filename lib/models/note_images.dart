@@ -29,4 +29,6 @@ class NoteImages {
       throw Exception('Error uploading images: $e');
     }
   }
+
+  addImagesToNote(List<File> selectedImages) {}
 }

@@ -61,7 +61,7 @@ class HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  Widget buildListView() {
+  Widget buildNoteView(bool isMapView) {
     return Expanded(
       child: StreamBuilder<List<Note>>(
         stream: noteRepo.getAllNotes(),
@@ -81,59 +81,31 @@ class HomeScreenState extends State<HomeScreen> {
                   note.title.toLowerCase().contains(searchQuery.toLowerCase()))
               .toList();
 
-          return NoteList(
-            notes: notes,
-            onNoteTap: (note) {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => NoteView(
-                    note: note,
-                    noteRepository: noteRepo,
+          return isMapView
+              ? NoteListMap(
+                  notes: notes,
+                  onNoteTap: (note) => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => NoteView(
+                        note: note,
+                        noteRepository: noteRepo,
+                      ),
+                    ),
                   ),
-                ),
-              );
-            },
-          );
-        },
-      ),
-    );
-  }
-
-  Widget buildMapView() {
-    return Expanded(
-      child: StreamBuilder<List<Note>>(
-        stream: noteRepo.getAllNotes(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          }
-          if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text('No notes available.'));
-          }
-
-          final notes = snapshot.data!
-              .where((note) =>
-                  note.title.toLowerCase().contains(searchQuery.toLowerCase()))
-              .toList();
-
-          return NoteListMap(
-            notes: notes,
-            onNoteTap: (note) {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => NoteView(
-                    note: note,
-                    noteRepository: noteRepo,
+                )
+              : NoteList(
+                  notes: notes,
+                  onNoteTap: (note) => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => NoteView(
+                        note: note,
+                        noteRepository: noteRepo,
+                      ),
+                    ),
                   ),
-                ),
-              );
-            },
-          );
+                );
         },
       ),
     );
@@ -260,7 +232,7 @@ class HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ],
-            currentIndex == 0 ? buildListView() : buildMapView(),
+            currentIndex == 0 ? buildNoteView(false) : buildNoteView(true),
           ],
         ),
       ),

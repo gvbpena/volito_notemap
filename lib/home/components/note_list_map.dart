@@ -105,9 +105,8 @@ class _NoteListMapState extends State<NoteListMap> {
           zoom: 10,
         );
       }
-      // Fallback position if no notes have a valid location
       return const CameraPosition(
-        target: LatLng(0, 0), // Default to 0,0 if no location is found
+        target: LatLng(0, 0),
         zoom: 2,
       );
     }

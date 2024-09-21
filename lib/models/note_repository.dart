@@ -1,22 +1,23 @@
+import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+// import 'package:firebase_storage/firebase_storage.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'note_model.dart';
+import 'note_images.dart';
 
 class NoteRepository {
   final CollectionReference _noteCollection =
       FirebaseFirestore.instance.collection('notes');
   final String? _userId = FirebaseAuth.instance.currentUser?.uid;
+  final NoteImages _noteImages = NoteImages();
 
-  // Ensure user is authenticated
   void _checkAuth() {
     if (_userId == null) throw Exception('User not authenticated');
   }
 
-  // Add a new note to Firestore
   Future<void> addNote(Note note) async {
     _checkAuth();
-
     try {
       await _noteCollection.add({
         'title': note.title,
@@ -36,19 +37,18 @@ class NoteRepository {
     }
   }
 
-  // Get a note by ID
   Future<Note?> getNoteById(String id) async {
     try {
       final doc = await _noteCollection.doc(id).get();
-      return doc.exists
-          ? Note.fromMap(doc.data() as Map<String, dynamic>, doc.id)
-          : null;
+      if (doc.exists) {
+        return Note.fromMap(doc.data() as Map<String, dynamic>, doc.id);
+      }
+      return null;
     } catch (e) {
-      rethrow;
+      throw Exception('Error retrieving note by ID: $e');
     }
   }
 
-  // Retrieve all notes belonging to the current user
   Stream<List<Note>> getAllNotes() {
     _checkAuth();
     return _noteCollection
@@ -60,13 +60,14 @@ class NoteRepository {
             .toList());
   }
 
-  // Update a note
-// Update the method signature
-  Future<void> updateNote(String id,
-      {String? title,
-      String? content,
-      LatLng? location,
-      List<String>? imageUrls}) async {
+  Future<void> updateNote(
+    String id, {
+    String? title,
+    String? content,
+    LatLng? location,
+    List<File>? newImages,
+    List<String>? imageUrls,
+  }) async {
     _checkAuth();
     final updateData = <String, dynamic>{};
 
@@ -78,26 +79,61 @@ class NoteRepository {
         'longitude': location.longitude,
       };
     }
-    if (imageUrls != null) {
-      updateData['imageUrls'] = imageUrls;
+
+    if (newImages != null && newImages.isNotEmpty) {
+      final List<String> uploadedImageUrls =
+          await _noteImages.uploadImages(newImages);
+      imageUrls ??= [];
+      imageUrls.addAll(uploadedImageUrls);
     }
 
-    if (updateData.isEmpty) return;
+    if (imageUrls != null) updateData['imageUrls'] = imageUrls;
 
-    try {
-      await _noteCollection.doc(id).update(updateData);
-    } catch (e) {
-      throw Exception('Error updating note: $e');
+    if (updateData.isNotEmpty) {
+      try {
+        await _noteCollection.doc(id).update(updateData);
+      } catch (e) {
+        throw Exception('Error updating note: $e');
+      }
     }
   }
 
-  // Delete a note
+  Future<void> addImagesToNote(String noteId, List<String> newImageUrls) async {
+    try {
+      await _noteCollection.doc(noteId).update({
+        'imageUrls': FieldValue.arrayUnion(newImageUrls),
+      });
+    } catch (e) {
+      throw Exception('Error adding images to note: $e');
+    }
+  }
+
   Future<void> deleteNoteById(String id) async {
     _checkAuth();
     try {
       await _noteCollection.doc(id).delete();
     } catch (e) {
       throw Exception('Error deleting note: $e');
+    }
+  }
+
+  Future<void> deleteImage(String noteId, String imageUrl) async {
+    _checkAuth();
+    try {
+      // final ref = FirebaseStorage.instance.refFromURL(imageUrl);
+      // await ref.delete();
+
+      final noteDoc = await _noteCollection.doc(noteId).get();
+      if (noteDoc.exists) {
+        List<dynamic> imageUrls = (noteDoc['imageUrls'] as List<dynamic>);
+        imageUrls.remove(imageUrl);
+
+        await _noteCollection.doc(noteId).update({
+          'imageUrls': imageUrls,
+        });
+      }
+    } catch (e) {
+      throw Exception('Error deleting image: $e');
     }
   }
 }

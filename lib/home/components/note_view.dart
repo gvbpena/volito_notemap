@@ -4,7 +4,7 @@ import '../../models/note_model.dart';
 import '../../models/note_repository.dart';
 import 'note_edit.dart';
 
-class NoteView extends StatelessWidget {
+class NoteView extends StatefulWidget {
   final Note note;
   final NoteRepository noteRepository;
 
@@ -13,6 +13,36 @@ class NoteView extends StatelessWidget {
     required this.note,
     required this.noteRepository,
   });
+
+  @override
+  _NoteViewState createState() => _NoteViewState();
+}
+
+class _NoteViewState extends State<NoteView> {
+  late Note _currentNote;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentNote = widget.note;
+    _refreshNoteData();
+  }
+
+  Future<void> _refreshNoteData() async {
+    try {
+      final updatedNote =
+          await widget.noteRepository.getNoteById(_currentNote.id!);
+      if (updatedNote != null) {
+        setState(() {
+          _currentNote = updatedNote;
+        });
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error refreshing note data: $e')),
+      );
+    }
+  }
 
   Future<void> _deleteNoteAndNavigate(BuildContext context) async {
     final shouldDelete = await showDialog<bool>(
@@ -35,7 +65,7 @@ class NoteView extends StatelessWidget {
 
     if (shouldDelete == true) {
       try {
-        await noteRepository.deleteNoteById(note.id!);
+        await widget.noteRepository.deleteNoteById(_currentNote.id!);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Note deleted successfully')),
         );
@@ -66,7 +96,7 @@ class NoteView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final LatLng? location = note.location;
+    final LatLng? location = _currentNote.location;
 
     return Scaffold(
       appBar: AppBar(
@@ -79,11 +109,13 @@ class NoteView extends StatelessWidget {
                 context,
                 MaterialPageRoute(
                   builder: (context) => NoteEdit(
-                    note: note,
-                    noteRepository: noteRepository,
+                    note: _currentNote,
+                    noteRepository: widget.noteRepository,
                   ),
                 ),
-              );
+              ).then((_) {
+                _refreshNoteData();
+              });
             },
           ),
           Padding(
@@ -104,7 +136,7 @@ class NoteView extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                note.title,
+                _currentNote.title,
                 style: const TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
@@ -113,7 +145,7 @@ class NoteView extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                note.content,
+                _currentNote.content,
                 style: const TextStyle(fontSize: 18, color: Colors.black87),
               ),
               const SizedBox(height: 16),
@@ -151,25 +183,25 @@ class NoteView extends StatelessWidget {
               const Text(
                 "Images",
                 style: TextStyle(
-                  fontSize: 20, // Equivalent to an h3 font size
-                  fontWeight: FontWeight.bold, // Makes the text bold
-                  color: Colors
-                      .black, // Set color to black or any other color you prefer
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
                 ),
               ),
               const Divider(
-                color: Colors.black12, // Color of the divider
-                thickness: 1, // Thickness of the divider line
-                height: 16, // Space around the divider
+                color: Colors.black12,
+                thickness: 1,
+                height: 16,
               ),
-              if (note.imageUrls != null && note.imageUrls!.isNotEmpty)
+              if (_currentNote.imageUrls != null &&
+                  _currentNote.imageUrls!.isNotEmpty)
                 SizedBox(
-                  height: 120, // Height for the image carousel
+                  height: 120,
                   child: ListView.builder(
-                    scrollDirection: Axis.horizontal, // Horizontal scroll
-                    itemCount: note.imageUrls!.length,
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _currentNote.imageUrls!.length,
                     itemBuilder: (context, index) {
-                      final imageUrl = note.imageUrls![index];
+                      final imageUrl = _currentNote.imageUrls![index];
                       return GestureDetector(
                         onTap: () => _showImage(context, imageUrl),
                         child: Padding(
@@ -180,7 +212,7 @@ class NoteView extends StatelessWidget {
                               imageUrl,
                               fit: BoxFit.cover,
                               width: 120,
-                              height: 120, // Set image size
+                              height: 120,
                             ),
                           ),
                         ),
@@ -193,8 +225,7 @@ class NoteView extends StatelessWidget {
                   "No images uploaded.",
                   style: TextStyle(
                     fontSize: 16,
-                    color: Colors
-                        .grey, // Use grey to indicate disabled or missing content
+                    color: Colors.grey,
                   ),
                 ),
             ],
