@@ -9,11 +9,13 @@ import '../../models/note_repository.dart';
 class ImageChange extends StatefulWidget {
   final Note note;
   final NoteRepository noteRepository;
+  final Function() onImagesUpdated;
 
   const ImageChange({
     super.key,
     required this.note,
     required this.noteRepository,
+    required this.onImagesUpdated,
   });
 
   @override
@@ -24,7 +26,6 @@ class _ImageChangeState extends State<ImageChange> {
   List<File> _selectedImages = [];
   final ImagePicker _picker = ImagePicker();
   bool _isLoading = false;
-  final List<String> _imageUrls = [];
   final NoteImages _noteImages = NoteImages();
   final CollectionReference _noteCollection =
       FirebaseFirestore.instance.collection('notes');
@@ -33,14 +34,37 @@ class _ImageChangeState extends State<ImageChange> {
     setState(() {
       _isLoading = true;
     });
-    final imageUrls = await _noteImages.uploadImages(_selectedImages);
-    await _noteCollection.add({
-      'imageUrls': imageUrls,
-    });
-    setState(() {
-      _isLoading = false;
-    });
-    _showSnackbar('Images updated successfully');
+
+    try {
+      // Upload the images and get the URLs
+      final imageUrls = await _noteImages.uploadImages(_selectedImages);
+
+      // Get the document ID
+      String documentId = widget.note.id!;
+
+      // Update Firestore document with new image URLs
+      await _noteCollection.doc(documentId).update({
+        'imageUrls': FieldValue.arrayUnion(imageUrls),
+      });
+
+      // Clear selected images after successful update
+      setState(() {
+        _selectedImages.clear(); // Clear the selected images list
+        widget.note.images.addAll(imageUrls); // Add new image URLs to the note
+      });
+
+      // Notify parent widget to refresh data
+      widget.onImagesUpdated();
+
+      // Show success message
+      _showSnackbar('Images updated successfully');
+    } catch (e) {
+      _showSnackbar('Failed to update images: $e');
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   void _removeImage(File image) {
@@ -58,19 +82,16 @@ class _ImageChangeState extends State<ImageChange> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white, // Set background color to white
+      backgroundColor: Colors.white, // Set background to white
       appBar: AppBar(
-        title:
-            const Text('Manage Images', style: TextStyle(color: Colors.black)),
-        backgroundColor: Colors.white,
-        elevation: 0,
+        title: const Text('Manage Images'),
         actions: [
           if (_isLoading)
             const Center(child: CircularProgressIndicator())
           else
             IconButton(
               onPressed: _updateImages,
-              icon: const Icon(Icons.save, color: Colors.black),
+              icon: const Icon(Icons.save),
             ),
         ],
       ),
@@ -79,14 +100,21 @@ class _ImageChangeState extends State<ImageChange> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Images',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text(
+                'Selected Images',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
             ),
-            const Divider(thickness: 1.5),
             _buildSelectedImagesList(),
+            const SizedBox(height: 24),
+            const Text(
+              'Existing Images',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
             _buildExistingImagesList(),
-            const SizedBox(height: 20), // Space between elements
+            const SizedBox(height: 24),
             _buildAddImagesButton(),
           ],
         ),
@@ -95,17 +123,20 @@ class _ImageChangeState extends State<ImageChange> {
   }
 
   Widget _buildAddImagesButton() {
-    return ElevatedButton.icon(
-      onPressed: _pickImages,
-      icon: const Icon(Icons.add_a_photo, color: Colors.black),
-      label: const Text('Add Images', style: TextStyle(color: Colors.black)),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-          side: const BorderSide(color: Colors.black),
+    return Center(
+      // Center the button for better alignment
+      child: ElevatedButton.icon(
+        onPressed: _pickImages,
+        icon: const Icon(Icons.add_a_photo, color: Colors.black),
+        label: const Text('Add Images', style: TextStyle(color: Colors.black)),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+            side: const BorderSide(color: Colors.black),
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
         ),
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
       ),
     );
   }
@@ -117,10 +148,11 @@ class _ImageChangeState extends State<ImageChange> {
     });
   }
 
+  // Enlarged image size and improved spacing
   Widget _buildSelectedImagesList() {
     if (_selectedImages.isNotEmpty) {
       return SizedBox(
-        height: 100,
+        height: 150, // Increased height for larger images
         child: ListView.builder(
           scrollDirection: Axis.horizontal,
           itemCount: _selectedImages.length,
@@ -131,13 +163,19 @@ class _ImageChangeState extends State<ImageChange> {
         ),
       );
     }
-    return const SizedBox.shrink();
+    // Display message when no images are selected
+    return const Center(
+      child: Text(
+        'No selected images yet.',
+        style: TextStyle(fontSize: 16, color: Colors.grey),
+      ),
+    );
   }
 
   Widget _buildExistingImagesList() {
     if (widget.note.images.isNotEmpty) {
       return SizedBox(
-        height: 120,
+        height: 150, // Increased height for existing images as well
         child: ListView.builder(
           scrollDirection: Axis.horizontal,
           itemCount: widget.note.images.length,
@@ -162,14 +200,16 @@ class _ImageChangeState extends State<ImageChange> {
 
   Widget _buildImageThumbnail(dynamic image, VoidCallback onDelete) {
     return Padding(
-      padding: const EdgeInsets.only(right: 8.0),
+      padding:
+          const EdgeInsets.only(right: 12.0), // Increased padding for spacing
       child: Stack(
         children: [
           ClipRRect(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(12), // Softer corners
             child: image is File
-                ? Image.file(image, fit: BoxFit.cover)
-                : Image.network(image, fit: BoxFit.cover),
+                ? Image.file(image, width: 120, height: 120, fit: BoxFit.cover)
+                : Image.network(image,
+                    width: 120, height: 120, fit: BoxFit.cover),
           ),
           Positioned(
             top: 8,
@@ -202,11 +242,11 @@ class _ImageChangeState extends State<ImageChange> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel', style: TextStyle(color: Colors.black)),
+            child: const Text('Cancel'),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            child: const Text('Delete'),
           ),
         ],
       ),
@@ -214,11 +254,17 @@ class _ImageChangeState extends State<ImageChange> {
 
     if (confirm == true) {
       try {
+        // Delete image from the repository or storage
         await widget.noteRepository.deleteImage(widget.note.id!, imageUrl);
+
+        // Remove image URL from the note's images list
         setState(() {
-          _imageUrls.remove(imageUrl);
+          widget.note.images.remove(imageUrl);
         });
+
+        // Notify the user and refresh the list
         _showSnackbar('Image deleted successfully');
+        widget.onImagesUpdated(); // Notify parent to refresh if necessary
       } catch (e) {
         _showSnackbar('Error deleting image: $e');
       }

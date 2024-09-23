@@ -82,14 +82,7 @@ class _NoteViewState extends State<NoteView> {
     showDialog(
       context: context,
       builder: (context) => Dialog(
-        child: SizedBox(
-          width: double.infinity,
-          height: double.infinity,
-          child: Image.network(
-            imageUrl,
-            fit: BoxFit.contain,
-          ),
-        ),
+        child: Image.network(imageUrl, fit: BoxFit.contain),
       ),
     );
   }

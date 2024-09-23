@@ -169,6 +169,12 @@ class _NoteEditState extends State<NoteEdit> {
                 builder: (context) => ImageChange(
                   note: widget.note,
                   noteRepository: widget.noteRepository,
+                  onImagesUpdated: () {
+                    // Logic to refresh images (if needed)
+                    setState(() {
+                      // You might want to re-fetch the note or just refresh the UI
+                    });
+                  },
                 ),
               ),
             );
