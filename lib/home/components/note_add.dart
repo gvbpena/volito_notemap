@@ -38,6 +38,10 @@ class _NoteAddState extends State<NoteAdd> {
   }
 
   Future<void> _saveNote() async {
+    setState(() {
+      _isLoading = true;
+    });
+
     final title = _titleController.text.trim();
     final content = _contentController.text.trim();
 
@@ -49,10 +53,6 @@ class _NoteAddState extends State<NoteAdd> {
       );
       return;
     }
-
-    setState(() {
-      _isLoading = true;
-    });
 
     try {
       final imageUrls = await _noteImages.uploadImages(_selectedImages);
@@ -105,8 +105,7 @@ class _NoteAddState extends State<NoteAdd> {
                   ),
                 )
               : Padding(
-                  padding: const EdgeInsets.only(
-                      right: 16.0, left: 8.0), // Add left padding
+                  padding: const EdgeInsets.only(right: 16.0, left: 8.0),
                   child: IconButton(
                     icon: const Icon(Icons.check),
                     onPressed: _saveNote,
@@ -119,107 +118,114 @@ class _NoteAddState extends State<NoteAdd> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Title input
-            TextField(
-              controller: _titleController,
-              decoration: const InputDecoration(
-                labelText: 'Title',
-                border: OutlineInputBorder(),
-                contentPadding:
-                    EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-              ),
-              style: const TextStyle(fontSize: 16, color: Colors.black87),
-            ),
+            _buildTitleInput(),
             const SizedBox(height: 16),
-
-            // Content input
-            TextField(
-              controller: _contentController,
-              maxLines: 5,
-              decoration: const InputDecoration(
-                labelText: 'Content',
-                border: OutlineInputBorder(),
-                contentPadding:
-                    EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-              ),
-              style: const TextStyle(fontSize: 16, color: Colors.black87),
-            ),
+            _buildContentInput(),
             const SizedBox(height: 16),
-
-            // Google Maps widget
-            SizedBox(
-              height: 300,
-              child: GoogleMap(
-                initialCameraPosition: const CameraPosition(
-                  target: LatLng(14.5995, 120.9842),
-                  zoom: 12,
-                ),
-                onTap: _onMapTap,
-                markers: _selectedLocation != null
-                    ? {
-                        Marker(
-                          markerId: const MarkerId('selected-location'),
-                          position: _selectedLocation!,
-                        ),
-                      }
-                    : {},
-              ),
-            ),
+            _buildGoogleMap(),
             const SizedBox(height: 16),
-
-            // Pick images button
-            ElevatedButton.icon(
-              onPressed: _pickImages,
-              icon: const Icon(Icons.add_a_photo, color: Colors.black),
-              label: const Text(
-                'Add Images',
-                style: TextStyle(color: Colors.black),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  side: const BorderSide(color: Colors.black), // Add a border
-                ),
-                padding:
-                    const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-              ),
-            ),
+            _buildPickImagesButton(),
             const SizedBox(height: 16),
-
-            // Display selected images
-            if (_selectedImages.isNotEmpty)
-              SizedBox(
-                height: 100,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: _selectedImages.length,
-                  itemBuilder: (context, index) {
-                    final image = _selectedImages[index];
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 8.0),
-                      child: Stack(
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(4),
-                            child: Image.file(image),
-                          ),
-                          Positioned(
-                            top: 8,
-                            right: 8,
-                            child: IconButton(
-                              icon: const Icon(Icons.delete, color: Colors.red),
-                              onPressed: () => _removeImage(image),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-              ),
+            if (_selectedImages.isNotEmpty) _buildSelectedImages(),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildTitleInput() {
+    return TextField(
+      controller: _titleController,
+      decoration: const InputDecoration(
+        labelText: 'Title',
+        border: OutlineInputBorder(),
+        contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      ),
+      style: const TextStyle(fontSize: 16, color: Colors.black87),
+    );
+  }
+
+  Widget _buildContentInput() {
+    return TextField(
+      controller: _contentController,
+      maxLines: 5,
+      decoration: const InputDecoration(
+        labelText: 'Content',
+        border: OutlineInputBorder(),
+        contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      ),
+      style: const TextStyle(fontSize: 16, color: Colors.black87),
+    );
+  }
+
+  Widget _buildGoogleMap() {
+    return SizedBox(
+      height: 300,
+      child: GoogleMap(
+        initialCameraPosition: const CameraPosition(
+          target: LatLng(14.5995, 120.9842),
+          zoom: 12,
+        ),
+        onTap: _onMapTap,
+        markers: _selectedLocation != null
+            ? {
+                Marker(
+                  markerId: const MarkerId('selected-location'),
+                  position: _selectedLocation!,
+                ),
+              }
+            : {},
+      ),
+    );
+  }
+
+  Widget _buildPickImagesButton() {
+    return ElevatedButton.icon(
+      onPressed: _pickImages,
+      icon: const Icon(Icons.add_a_photo, color: Colors.black),
+      label: const Text(
+        'Add Images',
+        style: TextStyle(color: Colors.black),
+      ),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+          side: const BorderSide(color: Colors.black),
+        ),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      ),
+    );
+  }
+
+  Widget _buildSelectedImages() {
+    return SizedBox(
+      height: 100,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: _selectedImages.length,
+        itemBuilder: (context, index) {
+          final image = _selectedImages[index];
+          return Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: Image.file(image),
+                ),
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: IconButton(
+                    icon: const Icon(Icons.delete, color: Colors.red),
+                    onPressed: () => _removeImage(image),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
